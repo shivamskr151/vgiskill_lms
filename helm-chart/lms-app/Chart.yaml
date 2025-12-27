@@ -1,0 +1,7 @@
+apiVersion: v2
+name: lms-app
+description: A Helm chart for VariPhi LMS Application
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+

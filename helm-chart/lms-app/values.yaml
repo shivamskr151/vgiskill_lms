@@ -1,0 +1,76 @@
+replicaCount: 1
+
+image:
+  repository: asia-south1-docker.pkg.dev/variphi/vgiskill/lms-prod/variphi/lms-app
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: "gce"
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "lms-ingress-ip"
+    networking.gke.io/managed-certificates: "variphi-lms-cert"
+    kubernetes.io/ingress.allow-http: "true"
+  hosts:
+    - host: vgiskill.ai
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+nodeSelector:
+  cloud.google.com/gke-nodepool: gke-prod-asia-south1-np-app-prod
+
+tolerations: []
+
+affinity: {}
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+# Database Configuration
+db:
+  host: "10.30.0.2"
+  port: 3306
+  user: "vgi_skill"
+  password: "vgiskill@2026"
+  name: "lms_db"
+
+# Application Configuration
+app:
+  port: 8080
+

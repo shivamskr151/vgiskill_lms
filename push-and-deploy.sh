@@ -1,0 +1,27 @@
+#!/bin/bash
+# Quick script to push image and get deployment commands
+
+PROJECT_ID="variphi"
+IMAGE_NAME="gcr.io/${PROJECT_ID}/variphi-artifacts/variphi/lms-app"
+
+echo "To push image and deploy, run these commands:"
+echo ""
+echo "1. Authenticate:"
+echo "   gcloud auth login"
+echo "   gcloud auth configure-docker gcr.io"
+echo ""
+echo "2. Push image:"
+echo "   cd src && docker build -t ${IMAGE_NAME}:latest ."
+echo "   docker push ${IMAGE_NAME}:latest"
+echo "   cd .."
+echo ""
+echo "3. Connect to cluster:"
+echo "   gcloud container clusters get-credentials gke-prod-asia-south1 --region asia-south1"
+echo ""
+echo "4. Deploy:"
+echo "   kubectl apply -f managed-certificate.yaml"
+echo "   cd helm-chart && helm upgrade --install lms-app ./lms-app && cd .."
+echo ""
+echo "5. Check status:"
+echo "   kubectl get pods -l app.kubernetes.io/name=lms-app"
+echo "   kubectl get ingress -l app.kubernetes.io/name=lms-app"
