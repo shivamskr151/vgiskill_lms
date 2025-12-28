@@ -38,8 +38,6 @@ spec:
               containerPort: {{ .Values.app.port }}
               protocol: TCP
           env:
-            - name: PORT
-              value: "{{ .Values.app.port }}"
             - name: DB_HOST
               value: "{{ .Values.db.host }}"
             - name: DB_PORT
@@ -53,20 +51,50 @@ spec:
                   key: password
             - name: DB_NAME
               value: "{{ .Values.db.name }}"
+            - name: SITE_NAME
+              value: "{{ .Values.frappe.siteName }}"
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lms-app.fullname" . }}-admin-secret
+                  key: password
+            {{- if .Values.db.rootPassword }}
+            - name: DB_ROOT_PASSWORD
+              value: "{{ .Values.db.rootPassword }}"
+            {{- end }}
+            - name: REDIS_HOST
+              value: "{{ .Values.frappe.redis.host }}"
+            - name: REDIS_PORT
+              value: "{{ .Values.frappe.redis.port }}"
+          volumeMounts:
+            {{- if .Values.persistence.enabled }}
+            - name: sites-storage
+              mountPath: {{ .Values.persistence.mountPath }}
+            {{- end }}
           livenessProbe:
             httpGet:
-              path: /health
+              path: /api/method/ping
               port: http
-            initialDelaySeconds: 30
-            periodSeconds: 10
+            initialDelaySeconds: 600
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
           readinessProbe:
             httpGet:
-              path: /health
+              path: /api/method/ping
               port: http
-            initialDelaySeconds: 10
-            periodSeconds: 5
+            initialDelaySeconds: 300
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        {{- if .Values.persistence.enabled }}
+        - name: sites-storage
+          persistentVolumeClaim:
+            claimName: {{ include "lms-app.fullname" . }}-pvc
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -79,4 +107,3 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-

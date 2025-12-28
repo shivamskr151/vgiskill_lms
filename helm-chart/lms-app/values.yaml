@@ -1,8 +1,8 @@
 replicaCount: 1
 
 image:
-  repository: asia-south1-docker.pkg.dev/variphi/vgiskill/lms-prod/variphi/lms-app
-  pullPolicy: IfNotPresent
+  repository: asia-south1-docker.pkg.dev/variphi/vgiskill/lms-prod/frappe-lms
+  pullPolicy: Always
   tag: "latest"
 
 imagePullSecrets: []
@@ -16,21 +16,29 @@ serviceAccount:
 
 podAnnotations: {}
 
-podSecurityContext: {}
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
 
-securityContext: {}
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
 
 service:
-  type: ClusterIP
+  type: NodePort
   port: 80
-  targetPort: 8080
+  targetPort: 8000
 
 ingress:
   enabled: true
   className: "gce"
   annotations:
     kubernetes.io/ingress.class: "gce"
-    kubernetes.io/ingress.global-static-ip-name: "lms-ingress-ip"
+    # kubernetes.io/ingress.global-static-ip-name: "lms-ingress-ip"  # IP is in use by old load balancer
     networking.gke.io/managed-certificates: "variphi-lms-cert"
     kubernetes.io/ingress.allow-http: "true"
   hosts:
@@ -40,13 +48,21 @@ ingress:
           pathType: Prefix
   tls: []
 
+# Persistent Volume Configuration
+persistence:
+  enabled: true
+  storageClass: "standard-rwo"
+  accessMode: ReadWriteOnce
+  size: 50Gi
+  mountPath: /home/frappe/frappe-bench/sites
+
 resources:
   limits:
-    cpu: 500m
-    memory: 512Mi
+    cpu: 2000m
+    memory: 4Gi
   requests:
-    cpu: 250m
-    memory: 256Mi
+    cpu: 1000m
+    memory: 2Gi
 
 nodeSelector:
   cloud.google.com/gke-nodepool: gke-prod-asia-south1-np-app-prod
@@ -67,10 +83,26 @@ db:
   host: "10.30.0.2"
   port: 3306
   user: "vgi_skill"
-  password: "vgiskill@2026"
+  password: "vgiskillUser@2026"
   name: "lms_db"
+  rootPassword: "vgiskill@2026#"  # MySQL root password for bench new-site
+
+# Frappe Configuration
+frappe:
+  siteName: "vgiskill.ai"
+  adminPassword: "admin@vgiskill2026"
+  redis:
+    host: "redis.lms.svc.cluster.local"  # Redis service FQDN in lms namespace
+    port: 6379
+  # Set to true if using external Redis
+  useExternalRedis: false
+
+# Redis Configuration (optional - if Redis service exists)
+redis:
+  enabled: false  # Set to true if you have a Redis deployment
+  host: "redis"   # Redis service name in Kubernetes
+  port: 6379
 
 # Application Configuration
 app:
-  port: 8080
-
+  port: 8000

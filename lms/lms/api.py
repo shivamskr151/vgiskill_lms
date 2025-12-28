@@ -1346,13 +1346,20 @@ def capture_user_persona(responses):
 	frappe.only_for("System Manager")
 	data = frappe.parse_json(responses)
 	data = json.dumps(data)
-	response = frappe.integrations.utils.make_post_request(
-		"https://school.frappe.io/api/method/capture-persona",
-		data={"response": data},
-	)
-	if response.get("message").get("name"):
+	try:
+		response = frappe.integrations.utils.make_post_request(
+			"https://school.frappe.io/api/method/capture-persona",
+			data={"response": data},
+		)
+		if response.get("message") and response.get("message").get("name"):
+			frappe.db.set_single_value("LMS Settings", "persona_captured", True)
+		return response
+	except Exception as e:
+		# Log error but don't fail the request - external API may be unavailable
+		frappe.log_error(f"Failed to capture user persona: {str(e)}", "LMS API")
+		# Set persona_captured to True anyway so user can continue
 		frappe.db.set_single_value("LMS Settings", "persona_captured", True)
-	return response
+		return {"message": {"status": "Persona capture skipped due to external API error"}}
 
 
 @frappe.whitelist()

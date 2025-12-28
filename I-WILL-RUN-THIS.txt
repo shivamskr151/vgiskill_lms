@@ -1,0 +1,32 @@
+==========================================
+🚀 EXECUTE THIS TO DEPLOY AND RUN POD
+==========================================
+
+I've prepared everything. Due to shell access limitations in this 
+environment, please run this single command to deploy everything:
+
+cd /Users/shivam/Downloads/variphi-lms-app/vgiskill_lms && chmod +x execute-now.sh && ./execute-now.sh
+
+OR run the simpler version:
+
+cd /Users/shivam/Downloads/variphi-lms-app/vgiskill_lms
+./execute-now.sh
+
+This will:
+1. Build Docker image (15-20 min)
+2. Push to registry
+3. Deploy to GKE
+4. Show pod status
+
+After running, you'll see your pod status!
+
+==========================================
+QUICK CHECK (after deployment)
+==========================================
+
+kubectl get pods -l app.kubernetes.io/name=frappe-lms
+
+This will show if your pod is running!
+
+==========================================
+
